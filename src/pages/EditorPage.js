@@ -7,8 +7,8 @@ import { initSocket } from '../socket';
 import {
     useLocation,
     useNavigate,
-    Navigate,
     useParams,
+    Navigate,
 } from 'react-router-dom';
 
 const EditorPage = () => {
@@ -16,64 +16,73 @@ const EditorPage = () => {
     const codeRef = useRef(null);
     const location = useLocation();
     const { roomId } = useParams();
-    const reactNavigator = useNavigate();
+    const reactNavigate = useNavigate();
     const [clients, setClients] = useState([]);
 
     useEffect(() => {
-        const init = async () => {
-            socketRef.current = await initSocket();
-            socketRef.current.on('connect_error', (err) => handleErrors(err));
-            socketRef.current.on('connect_failed', (err) => handleErrors(err));
+        const initializeSocket = async () => {
+            try {
+                socketRef.current = await initSocket();
+                
+                // Handle socket connection errors
+                socketRef.current.on('connect_error', handleSocketError);
+                socketRef.current.on('connect_timeout', handleSocketError);
+                socketRef.current.on('error', handleSocketError);
 
-            function handleErrors(e) {
-                console.log('socket error', e);
-                toast.error('Socket connection failed, try again later.');
-                reactNavigator('/');
+                // Handle joining room
+                socketRef.current.emit(ACTIONS.JOIN, {
+                    roomId,
+                    username: location.state?.username,
+                });
+
+                socketRef.current.on(ACTIONS.JOINED, handleJoinRoom);
+                socketRef.current.on(ACTIONS.DISCONNECTED, handleDisconnected);
+            } catch (error) {
+                handleSocketError(error);
             }
-
-            socketRef.current.emit(ACTIONS.JOIN, {
-                roomId,
-                username: location.state?.username,
-            });
-
-            // Listening for joined event
-            socketRef.current.on(
-                ACTIONS.JOINED,
-                ({ clients, username, socketId }) => {
-                    if (username !== location.state?.username) {
-                        toast.success(`${username} joined the room.`);
-                        console.log(`${username} joined`);
-                    }
-                    setClients(clients);
-                    socketRef.current.emit(ACTIONS.SYNC_CODE, {
-                        code: codeRef.current,
-                        socketId,
-                    });
-                }
-            );
-
-            // Listening for disconnected
-            socketRef.current.on(
-                ACTIONS.DISCONNECTED,
-                ({ socketId, username }) => {
-                    toast.success(`${username} left the room.`);
-                    setClients((prev) => {
-                        return prev.filter(
-                            (client) => client.socketId !== socketId
-                        );
-                    });
-                }
-            );
         };
-        init();
+
+        initializeSocket();
+
         return () => {
-            socketRef.current.disconnect();
-            socketRef.current.off(ACTIONS.JOINED);
-            socketRef.current.off(ACTIONS.DISCONNECTED);
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current.off(ACTIONS.JOINED, handleJoinRoom);
+                socketRef.current.off(ACTIONS.DISCONNECTED, handleDisconnected);
+                socketRef.current.off('connect_error', handleSocketError);
+                socketRef.current.off('connect_timeout', handleSocketError);
+                socketRef.current.off('error', handleSocketError);
+            }
         };
-    }, []);
+    }, [roomId, location.state]);
 
-    async function copyRoomId() {
+    const handleSocketError = (err) => {
+        console.error('Socket error:', err);
+        toast.error('Socket connection failed, please try again later.');
+        reactNavigate('/');
+    };
+
+    const handleJoinRoom = ({ clients, username, socketId }) => {
+        if (username !== location.state?.username) {
+            toast.success(`${username} joined the room.`);
+        }
+        setClients(clients);
+        syncCodeWithServer(socketId);
+    };
+
+    const handleDisconnected = ({ socketId, username }) => {
+        toast.success(`${username} left the room.`);
+        setClients((prevClients) => prevClients.filter((client) => client.socketId !== socketId));
+    };
+
+    const syncCodeWithServer = (socketId) => {
+        socketRef.current.emit(ACTIONS.SYNC_CODE, {
+            code: codeRef.current,
+            socketId,
+        });
+    };
+
+    const copyRoomId = async () => {
         try {
             await navigator.clipboard.writeText(roomId);
             toast.success('Room ID has been copied to your clipboard');
@@ -81,11 +90,11 @@ const EditorPage = () => {
             toast.error('Could not copy the Room ID');
             console.error(err);
         }
-    }
+    };
 
-    function leaveRoom() {
-        reactNavigator('/');
-    }
+    const leaveRoom = () => {
+        reactNavigate('/');
+    };
 
     if (!location.state) {
         return <Navigate to="/" />;
@@ -96,19 +105,12 @@ const EditorPage = () => {
             <div className="aside">
                 <div className="asideInner">
                     <div className="logo">
-                        <img
-                            className="logoImage"
-                            src="/code-sync.png"
-                            alt="logo"
-                        />
+                        <img className="logoImage" src="/code-sync.png" alt="logo" />
                     </div>
                     <h3>Connected</h3>
                     <div className="clientsList">
                         {clients.map((client) => (
-                            <Client
-                                key={client.socketId}
-                                username={client.username}
-                            />
+                            <Client key={client.socketId} username={client.username} />
                         ))}
                     </div>
                 </div>
