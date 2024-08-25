@@ -6,10 +6,10 @@ const { Server } = require('socket.io');
 const ACTIONS = require('./src/Actions');
 
 
-const port=process.env.PORT||5000;
-const staticPath=path.resolve(__dirname,".","dist");
+// const port=process.env.PORT||5000;
+// const staticPath=path.resolve(__dirname,".","dist");
 
-console.log(staticPath);
+// console.log(staticPath);
 
 const server = http.createServer(app);
 const io = new Server(server); //create instance of Server class
@@ -72,13 +72,13 @@ io.on('connection', (socket) => {   //ye event trigger ho jati hai jaise hi koi 
     });
 });
 
-if(process.env.NODE_ENV==="production"){
-    app.get("*",(req,res)=>{
-        app.use(express.static(staticPath));
-        const indexFile=path.join(__dirname,"dist","index.html");
-        return res.sendFile(indexFile);
-    });
-}
+// if(process.env.NODE_ENV==="production"){
+//     app.get("*",(req,res)=>{
+//         app.use(express.static(staticPath));
+//         const indexFile=path.join(__dirname,"dist","index.html");
+//         return res.sendFile(indexFile);
+//     });
+// }
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
