@@ -3,22 +3,27 @@ const app = express();
 const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io'); 
-const ACTIONS = require('./src/Actions');
-
-
-// const port=process.env.PORT||5000;
-// const staticPath=path.resolve(__dirname,".","dist");
-
-// console.log(staticPath);
+const ACTIONS = require('./Actions');
 
 const server = http.createServer(app);
 const io = new Server(server); //create instance of Server class
 
 
-app.use(express.static('build'));
-app.use((req, res, next) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
+// app.use(express.static('build'));
+// app.use((req, res, next) => {
+//     res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// });
+
+//-----Deployement-------
+
+app.use(express.static(path.join(__dirname,'/client/build')));
+app.get("*",(req,res)=>{
+    res.sendFile(path.resolve(__dirname,"client","build","index.html"),(err)=>{
+        res.status(500).send(err)
+    });
+})
+
+//----Deployement------
 
 const userSocketMap = {};
 function getAllConnectedClients(roomId) {
