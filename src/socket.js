@@ -7,5 +7,6 @@ export const initSocket = async () => {
         timeout: 10000,
         transports: ['websocket'],
     };
-    return io(process.env.REACT_APP_BACKEND_URL, options);
+    return io(process.env.REACT_APP_BACKEND_URL, options);  
+    //server.js kon se port or url ke upr hai vo dena hai
 };

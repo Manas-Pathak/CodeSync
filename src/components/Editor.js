@@ -9,7 +9,7 @@ import ACTIONS from '../Actions';
 
 const Editor = ({ socketRef, roomId, onCodeChange }) => {
     const editorRef = useRef(null);
-    useEffect(() => {
+    useEffect(() => { // to initialise the code editor
         async function init() {
             editorRef.current = Codemirror.fromTextArea(
                 document.getElementById('realtimeEditor'),
@@ -22,6 +22,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
                 }
             );
 
+            //now we need to add an event listener on the editor ref
             editorRef.current.on('change', (instance, changes) => {
                 const { origin } = changes;
                 const code = instance.getValue();
@@ -33,6 +34,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
                     });
                 }
             });
+            //editorRef.current.setValue('console.log('hello')');
         }
         init();
     }, []);

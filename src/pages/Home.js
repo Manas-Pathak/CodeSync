@@ -9,8 +9,8 @@ const Home = () => {
     const [roomId, setRoomId] = useState('');
     const [username, setUsername] = useState('');
     const createNewRoom = (e) => {
-        e.preventDefault();
-        const id = uuidV4();
+        e.preventDefault();  //to prevent from page refereshing due to ancher tag 
+        const id = uuidV4(); 
         setRoomId(id);
         toast.success('Created a new room');
     };

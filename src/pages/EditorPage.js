@@ -15,7 +15,7 @@ const EditorPage = () => {
     const socketRef = useRef(null);
     const codeRef = useRef(null);
     const location = useLocation();
-    const { roomId } = useParams();
+    const { roomId } = useParams();  //to get id
     const reactNavigate = useNavigate();
     const [clients, setClients] = useState([]);
 
@@ -34,8 +34,9 @@ const EditorPage = () => {
                     roomId,
                     username: location.state?.username,
                 });
-
+                    //listening for joined event
                 socketRef.current.on(ACTIONS.JOINED, handleJoinRoom);
+                    //listening for disconnectioning event
                 socketRef.current.on(ACTIONS.DISCONNECTED, handleDisconnected);
             } catch (error) {
                 handleSocketError(error);

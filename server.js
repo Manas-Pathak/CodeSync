@@ -2,11 +2,18 @@ const express = require('express');
 const app = express();
 const http = require('http');
 const path = require('path');
-const { Server } = require('socket.io');
+const { Server } = require('socket.io'); 
 const ACTIONS = require('./src/Actions');
 
+
+const port=process.env.PORT||5000;
+const staticPath=path.resolve(__dirname,".","dist");
+
+console.log(staticPath);
+
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server); //create instance of Server class
+
 
 app.use(express.static('build'));
 app.use((req, res, next) => {
@@ -26,7 +33,7 @@ function getAllConnectedClients(roomId) {
     );
 }
 
-io.on('connection', (socket) => {
+io.on('connection', (socket) => {   //ye event trigger ho jati hai jaise hi koi socket server ko connect ho jata hai
     console.log('socket connected', socket.id);
 
     socket.on(ACTIONS.JOIN, ({ roomId, username }) => {
@@ -34,14 +41,15 @@ io.on('connection', (socket) => {
         socket.join(roomId);
         const clients = getAllConnectedClients(roomId);
         clients.forEach(({ socketId }) => {
-            io.to(socketId).emit(ACTIONS.JOINED, {
-                clients,
-                username,
+            io.to(socketId).emit(ACTIONS.JOINED, { //notify kr rhe sbko
+                clients, //clients list
+                username,  
                 socketId: socket.id,
             });
         });
     });
 
+    //editor me jo changes wale part
     socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }) => {
         socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { code });
     });
@@ -50,8 +58,9 @@ io.on('connection', (socket) => {
         io.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
     });
 
+    //disconnectiong part
     socket.on('disconnecting', () => {
-        const rooms = [...socket.rooms];
+        const rooms = [...socket.rooms];  //to get all rooms
         rooms.forEach((roomId) => {
             socket.in(roomId).emit(ACTIONS.DISCONNECTED, {
                 socketId: socket.id,
@@ -62,6 +71,14 @@ io.on('connection', (socket) => {
         socket.leave();
     });
 });
+
+if(process.env.NODE_ENV==="production"){
+    app.get("*",(req,res)=>{
+        app.use(express.static(staticPath));
+        const indexFile=path.join(__dirname,"dist","index.html");
+        return res.sendFile(indexFile);
+    });
+}
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
