@@ -6,13 +6,18 @@ const { Server } = require('socket.io');
 const ACTIONS = require('./Actions');
 
 const server = http.createServer(app);
-const io = new Server(server); //create instance of Server class
+const io = new Server(server, {
+    cors: {
+        origin: "https://your-deployed-url.com",  // Replace with your actual frontend URL
+        methods: ["GET", "POST"],
+        credentials: true,
+    }
+});
 
-
-// app.use(express.static('build'));
-// app.use((req, res, next) => {
-//     res.sendFile(path.join(__dirname, 'build', 'index.html'));
-// });
+app.use(express.static('build'));
+app.use((req, res, next) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 //-----Deployement-------
 
