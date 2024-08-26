@@ -8,7 +8,7 @@ const ACTIONS = require('./Actions');
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "https://your-deployed-url.com",  // Replace with your actual frontend URL
+        origin: "https://codesync-uwtb.onrender.com/",  // Replace with your actual frontend URL
         methods: ["GET", "POST"],
         credentials: true,
     }
